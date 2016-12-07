@@ -84,7 +84,7 @@ namespace TrayFinance
             string tickersymbols = String.Join("+", tickers);
             using (var client = new WebClient())
             {
-               client.DownloadFile("http://finance.yahoo.com/d/quotes.csv?s=" + tickersymbols + "&f=nb", "data.csv");
+               client.DownloadFile("http://finance.yahoo.com/d/quotes.csv?s=" + tickersymbols + "&f=nl1", "data.csv");
             }
 
             string newData = "";
