@@ -16,11 +16,12 @@ namespace TrayFinance
     public partial class TrayFinance : Form
     {
         private NotifyIcon trayIcon;
-        private string[] tickers;
+        private string[] tickers=new string[0];
         public TrayFinance()
         {
-            tickers = File.ReadAllLines(@"tickers.dat", Encoding.UTF8);
-            
+            if (File.Exists(@"tickers.dat")) {
+                tickers = File.ReadAllLines(@"tickers.dat", Encoding.UTF8);
+            }
             InitializeComponent();
 
         }
@@ -54,7 +55,8 @@ namespace TrayFinance
 
         private void trayIcon_MouseDoubleClick(object sender, EventArgs e)
         {
-            trayIcon.ShowBalloonTip(1000);
+            //trayIcon.ShowBalloonTip(1000);
+            updateData();
             this.Show();
             this.WindowState = FormWindowState.Normal;
             this.ShowInTaskbar = true;
@@ -71,7 +73,9 @@ namespace TrayFinance
             int numTickers = tickers.Length;
             Array.Resize<string>(ref tickers, numTickers+1);
             tickers[numTickers] = textBox1.Text;
-             File.WriteAllLines(@"tickers.dat",tickers, Encoding.UTF8);
+            ListViewItem listItem = new ListViewItem(tickers[numTickers]);
+            listView1.Items.Add(listItem);
+            File.WriteAllLines(@"tickers.dat",tickers, Encoding.UTF8);
         }
 
         private void textBox1_TextChanged(object sender, EventArgs e)
@@ -101,7 +105,10 @@ namespace TrayFinance
             }
             trayIcon.BalloonTipText = newData;
             trayIcon.Visible = true;
-            trayIcon.ShowBalloonTip(1000);
+            if (trayIcon.BalloonTipText != "")
+            {
+                trayIcon.ShowBalloonTip(1000);
+            }
         }
         private void OnScheduledUpdate(object source, ElapsedEventArgs e)
         {
