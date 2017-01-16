@@ -35,7 +35,7 @@ namespace TrayFinance
             for (var i=0; i<tickers.Length;i++){
                 ListViewItem listItem = new ListViewItem(tickers[i]);
                 listView1.Items.Add(listItem); }
-            trayIcon.Icon = new Icon("RSIT.ico");
+            trayIcon.Icon = Properties.Resources.TF;
             
             trayIcon.Text = "TrayFinance";
             trayIcon.BalloonTipText = "";
