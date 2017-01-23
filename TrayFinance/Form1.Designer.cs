@@ -36,12 +36,13 @@
             // 
             // listView1
             // 
-            this.listView1.Location = new System.Drawing.Point(21, 113);
+            this.listView1.Location = new System.Drawing.Point(21, 62);
             this.listView1.Name = "listView1";
-            this.listView1.Size = new System.Drawing.Size(238, 113);
+            this.listView1.Size = new System.Drawing.Size(238, 164);
             this.listView1.TabIndex = 0;
             this.listView1.UseCompatibleStateImageBehavior = false;
             this.listView1.SelectedIndexChanged += new System.EventHandler(this.listView1_SelectedIndexChanged);
+            this.listView1.MouseClick += new System.Windows.Forms.MouseEventHandler(this.listView1_MouseClick);
             // 
             // textBox1
             // 
@@ -74,6 +75,7 @@
             this.Name = "TrayFinance";
             this.Text = "TrayFinance";
             this.Load += new System.EventHandler(this.Form1_Load);
+            this.Resize += new System.EventHandler(this.TrayFinance_Resize);
             this.ResumeLayout(false);
             this.PerformLayout();
 

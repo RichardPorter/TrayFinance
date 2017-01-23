@@ -16,7 +16,10 @@ namespace TrayFinance
     public partial class TrayFinance : Form
     {
         private NotifyIcon trayIcon;
+        private System.Windows.Forms.MenuItem menuItemExit;
         private string[] tickers=new string[0];
+        private System.Windows.Forms.ContextMenuStrip rightClickTicker;
+        private string selectedTicker="";
         public TrayFinance()
         {
             if (File.Exists(@"tickers.dat")) {
@@ -31,6 +34,14 @@ namespace TrayFinance
             this.components = new System.ComponentModel.Container();
             this.trayIcon = new System.Windows.Forms.NotifyIcon(this.components);
             trayIcon.DoubleClick += new EventHandler(this.trayIcon_MouseDoubleClick);
+            trayIcon.ContextMenu = new System.Windows.Forms.ContextMenu();
+            this.menuItemExit = new System.Windows.Forms.MenuItem();
+            rightClickTicker = new System.Windows.Forms.ContextMenuStrip();
+            rightClickTicker.Items.Add("Delete Ticker", null, this.deleteItem);
+            this.menuItemExit.Index = 0;
+            this.menuItemExit.Text = "Exit";
+            this.menuItemExit.Click += new System.EventHandler(this.menuItemExit_Click);
+            trayIcon.ContextMenu.MenuItems.Add(this.menuItemExit);
             listView1.View = View.List;
             for (var i=0; i<tickers.Length;i++){
                 ListViewItem listItem = new ListViewItem(tickers[i]);
@@ -52,6 +63,30 @@ namespace TrayFinance
             aTimer.Enabled = true;
             this.ShowInTaskbar = false;
               }
+        private void deleteItem(object sender, EventArgs e)
+        {
+            if (selectedTicker != "")
+            {
+                foreach (ListViewItem item in listView1.SelectedItems)
+                {
+                    if (item.Text == selectedTicker)
+                    {
+                        listView1.Items.Remove(item);
+                    }
+                }
+                int itemIndex = Array.IndexOf(tickers, selectedTicker);
+                int numTickers = tickers.Length;
+                for (int i=itemIndex;i<numTickers-1; i++)
+                {
+                    tickers[i] = tickers[i + 1];
+                }
+                Array.Resize<string>(ref tickers, numTickers - 1);
+                File.WriteAllLines(@"tickers.dat", tickers, Encoding.UTF8);
+                selectedTicker = "";
+
+            }
+            
+        }
 
         private void trayIcon_MouseDoubleClick(object sender, EventArgs e)
         {
@@ -113,6 +148,37 @@ namespace TrayFinance
         private void OnScheduledUpdate(object source, ElapsedEventArgs e)
         {
             this.updateData();
+        }
+
+       
+        private void TrayFinance_Resize(object sender, EventArgs e)
+        {
+            if (FormWindowState.Minimized == this.WindowState)
+            {
+                trayIcon.Visible = true;
+                this.Hide();
+            }
+        }
+        private void menuItemExit_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+
+        private void listView1_MouseClick(object sender, MouseEventArgs e)
+        {
+
+            if (e.Button == MouseButtons.Right)
+            {
+                this.selectedTicker = "";
+                rightClickTicker.Show(Cursor.Position);
+                foreach (ListViewItem item in listView1.Items)
+                {
+                    if (item.Bounds.Contains(new Point(e.X, e.Y)))
+                    {
+                        this.selectedTicker=item.Text;
+                    }
+                }
+            }
         }
     }
 }
