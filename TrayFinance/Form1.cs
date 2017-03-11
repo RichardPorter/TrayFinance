@@ -110,6 +110,7 @@ namespace TrayFinance
             tickers[numTickers] = textBox1.Text;
             ListViewItem listItem = new ListViewItem(tickers[numTickers]);
             listView1.Items.Add(listItem);
+            textBox1.Text = "";
             File.WriteAllLines(@"tickers.dat",tickers, Encoding.UTF8);
         }
 
