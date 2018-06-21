@@ -11,6 +11,7 @@ using System.Net;
 using System.IO;
 using Microsoft.VisualBasic.FileIO;
 using System.Timers;
+using System.Text.RegularExpressions;
 namespace TrayFinance
 {
     public partial class TrayFinance : Form
@@ -102,7 +103,44 @@ namespace TrayFinance
         {
 
         }
+        private string retrieveData(string ticker)
+        {
+            var getRestApi = new WebClient();
+            getRestApi.Headers.Add("user-agent", "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36");
+            try
+            {
+                Regex currencyRegex = new Regex(@"^CURRENCY", RegexOptions.IgnoreCase);
+                Match currencyMatch = currencyRegex.Match(ticker);
+                if (currencyMatch.Success) 
+                {
+                    String[] currencyParams = ticker.Split(':');
+                    var response = getRestApi.DownloadString("https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency="+
+                        currencyParams[1]+"&to_currency="+currencyParams[2]+ "&apikey=BLXYVLRVS6HFKM60");
+                    // The following is less nasty than adding a dependency for a JSON parser
+                    Regex exchangeRateRegex = new Regex("(?:\\\"5. Exchange Rate\\\": \\\")([0-9\\.]+)",RegexOptions.IgnoreCase);
+                    Match rateMatches = exchangeRateRegex.Match(response);
+                    String exchangeRate = currencyParams[1] + '/' + currencyParams[2] + ": " + rateMatches.Groups[1].Value;
+                    return (exchangeRate);
+                }
+                //as of 2018-06-21, block quotes only qork for US stocks, which is why it's done one by one
+                Regex stockRegex = new Regex(@"^STOCK", RegexOptions.IgnoreCase);
+                Match stockMatch = stockRegex.Match(ticker);
+                if (stockMatch.Success)
+                {
+                    String[] stockParams = ticker.Split(':');
+                    var response = getRestApi.DownloadString("https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=" + stockParams[1] + "&interval=1min" 
+                        + "&apikey=BLXYVLRVS6HFKM60&datatype=csv");
+                    String[] stockQuotes = response.Split(',');
+                    return (stockParams[1] + ": " + stockQuotes[9]); //another hack. will break if any fields are added to ouptut
+                }
+            }
+            catch (Exception)
+            {
 
+                return("");
+            }
+            return ("");
+        }
         private void button1_Click(object sender, EventArgs e)
         {
             int numTickers = tickers.Length;
@@ -120,24 +158,19 @@ namespace TrayFinance
         }
         private void updateData()
         {
-
-            string tickersymbols = String.Join("+", tickers);
-            using (var client = new WebClient())
+            String newData = "";
+            String newDataElement = "";
+            foreach (String ticker in tickers)
             {
-               client.DownloadFile("http://finance.yahoo.com/d/quotes.csv?s=" + tickersymbols + "&f=nl1", "data.csv");
-            }
-
-            string newData = "";
-           using (TextFieldParser csvparser = new TextFieldParser(@"data.csv"))
-            {
-                csvparser.TextFieldType = FieldType.Delimited;
-                csvparser.SetDelimiters(",");
-                while (!csvparser.EndOfData)
+                newDataElement = retrieveData(ticker);
+                if (newDataElement != "")
                 {
-                    //Processing row
-                    string[] fields = csvparser.ReadFields();
-                    newData = newData + fields[0]+ "    " +fields[1]+ Environment.NewLine;
+                    newData = newData + newDataElement + '\n';
                 }
+            }
+            if (newData == "")
+            {
+                newData = "No data retrieved. Check network connectivity.";
             }
             trayIcon.BalloonTipText = newData;
             trayIcon.Visible = true;
